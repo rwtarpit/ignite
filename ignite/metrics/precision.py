@@ -88,6 +88,10 @@ class _BasePrecisionRecall(_BaseClassification):
 
         return y_pred, y, correct
 
+    @classmethod
+    def _topk_transform(cls, output: Sequence[torch.tensor], top_k: int) -> Sequence[torch.tensor]:
+        return output
+
     @reinit__is_reduced
     def reset(self) -> None:
         """
@@ -410,8 +414,9 @@ class Precision(_BasePrecisionRecall):
                 For binary and multilabel data, both y and y_pred should consist of 0's and 1's, but for multiclass
                 data, y_pred and y should consist of probabilities and integers respectively.
         """
-        self._check_shape(output)
-        self._check_type(output)
+        if not getattr(self, "_skip_checks", False):
+            self._check_shape(output)
+            self._check_type(output)
         y_pred, y, correct = self._prepare_output(output)
 
         if self._average == "samples":
