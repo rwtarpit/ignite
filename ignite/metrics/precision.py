@@ -88,10 +88,6 @@ class _BasePrecisionRecall(_BaseClassification):
 
         return y_pred, y, correct
 
-    @classmethod
-    def _topk_transform(cls, output: Sequence[torch.tensor], top_k: int) -> Sequence[torch.tensor]:
-        return output
-
     @reinit__is_reduced
     def reset(self) -> None:
         """

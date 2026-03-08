@@ -9,7 +9,8 @@ class TopK(Metric):
     """https://github.com/open-mmlab/mmengine/blob/main/mmengine/registry/registry.py
         https://github.com/open-mmlab/mmdetection/tree/main
 
-    the idea is to maintain tok_k transforms here for metrics.
+    the idea is to maintain top_k transforms here for metrics.
+    each topk_transform will be registered in TopK class.
     and user will have to pass output_transform to TopK instead of base_metric
     and the output transform must only unpack output into y_pred, y, and do no other transformations like binarisation
     """
@@ -46,8 +47,11 @@ class TopK(Metric):
         self._states = {k: self._base_metric.state_dict() for k in self._ks}
 
     def update(self, output):
-        self._base_metric._check_shape(output)
-        self._base_metric._check_type(output)
+        """run checks on output only once for highest `k` value and then skip checks
+        in base metric's update for each `k`"""
+        _output = self._transform(output, self._ks[-1])
+        self._base_metric._check_shape(_output)
+        self._base_metric._check_type(_output)
         self._base_metric._skip_checks = True
 
         for k in self._ks:
@@ -71,6 +75,7 @@ class TopK(Metric):
 
 
 def _precision_recall_topk_transform(output: Sequence[torch.Tensor], k: int):
+    """top_k transform for precision and recall"""
     y_pred, y = output[0], output[1]
     _, top_indices = torch.topk(y_pred, k=k, dim=-1)
     masked = torch.zeros_like(y_pred)
